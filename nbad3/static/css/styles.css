@@ -1,0 +1,568 @@
+@font-face {
+    font-family: "digital-7";
+    src: url("../fonts/digital-7.ttf")
+}
+
+@font-face {
+    font-family: "digital-7-mono";
+    src: url("../fonts/digital-7 (mono).ttf")
+}
+
+#below_header {
+    border-top: 5px solid black;
+    background: #cccccc;
+}
+
+#header {
+    background-image: url("../img/header_bball.jpg");
+    background-repeat: no-repeat;
+    background-position: right;
+    height: 115px;
+    padding: 9px 10px 9px 10px;
+    float: top;
+}
+
+#header_text {
+    color: #000000;
+    display:inline-block;
+    font-size: 60px;
+    font-weight: bold;
+    font-family: "Century Gothic";
+    padding: 0 0 0 20px;
+}
+
+.scoreboard-desc {
+    font-family: Silom;
+    font-size: 16px;
+}
+
+#nba_logo {
+    float: left;
+}
+
+#logo_img {
+    height: 100px;
+    margin-right: 15px;
+    margin-top: -3px;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    display: inline;
+}
+
+li {
+    list-style: none;
+    display: inline-block;
+}
+
+#form_table {
+    padding: 5px;
+}
+
+.form_td_field {
+    padding: 2px 0px 2px 10px;
+}
+
+.form_td {
+    padding: 2px 0px 2px 10px;
+    font-weight: bolder;
+}
+
+.d3_divs_td {
+    padding-left: 10px;
+}
+
+#scoreboard-cell {
+    vertical-align: top;
+}
+
+#court-area {
+    width: 950px;
+}
+
+.scoreboard-text {
+    font-family: digital-7-mono, sans-serif;
+}
+
+#gameclock-text {
+    fill: #ffbe4e;
+    font-size: 50px;
+}
+
+#shotclock-text, #quarter-text {
+    fill: red;
+    font-size: 32px;
+}
+
+#homescore-text, #visitorscore-text {
+    fill: #00bf36;
+    font-size: 50px;
+}
+
+circle.marker {
+    stroke-width: 2px;
+}
+
+circle.marker._ball {
+    fill: #EB9423;
+    stroke: #000000;
+    stroke-width: 1px;
+}
+
+circle.marker.home.ATL {
+    fill: #FFFFFF;
+    stroke: #C1D32F;
+}
+text.jersey.home.ATL {
+    fill: #E03A3E;
+}
+circle.marker.visitor.ATL {
+    fill: #26282A;
+    stroke: #E03A3E;
+}
+text.jersey.visitor.ATL {
+    fill: #C1D32F;
+}
+
+circle.marker.home.BOS {
+    fill: #FFFFFF;
+    stroke: #007A33;
+}
+text.jersey.home.BOS {
+    fill: #007A33;
+}
+circle.marker.visitor.BOS {
+    fill: #007A33;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.BOS {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.BKN {
+    fill: #FFFFFF;
+    stroke: #000000;
+}
+text.jersey.home.BKN {
+    fill: #000000;
+}
+circle.marker.visitor.BKN {
+    fill: #000000;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.BKN {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.CHA {
+    fill: #FFFFFF;
+    stroke: #00788C;
+}
+text.jersey.home.CHA {
+    fill: #1D1160;
+}
+circle.marker.visitor.CHA {
+    fill: #00788C;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.CHA {
+    fill: #1D1160;
+}
+
+circle.marker.home.CHI {
+    fill: #FFFFFF;
+    stroke: #CE1141;
+}
+text.jersey.home.CHI {
+    fill: #CE1141;
+}
+circle.marker.visitor.CHI {
+    fill: #CE1141;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.CHI {
+    fill: #000000;
+}
+
+circle.marker.home.CLE {
+    fill: #FFFFFF;
+    stroke: #FFB81C;
+}
+text.jersey.home.CLE {
+    fill: #6F263D;
+}
+circle.marker.visitor.CLE {
+    fill: #6F263D;
+    stroke: #FFB81C;
+}
+text.jersey.visitor.CLE {
+    fill: #041E42;
+}
+
+circle.marker.home.DAL {
+    fill: #FFFFFF;
+    stroke: #002B5E;
+}
+text.jersey.home.DAL {
+    fill: #00538C;
+}
+circle.marker.visitor.DAL {
+    fill: #00538C;
+    stroke: #002B5E;
+}
+text.jersey.visitor.DAL {
+    fill: #B8C4CA;
+}
+
+circle.marker.home.DEN {
+    fill: #FFFFFF;
+    stroke: #FEC524;
+}
+text.jersey.home.DEN {
+    fill: #0E2240;
+}
+circle.marker.visitor.DEN {
+    fill: #0E2240;
+    stroke: #FEC524;
+}
+text.jersey.visitor.DEN {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.DET {
+    fill: #FFFFFF;
+    stroke: #006BB6;
+}
+text.jersey.home.DET {
+    fill: #C8102E;
+}
+circle.marker.visitor.DET {
+    fill: #006BB6;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.DET {
+    fill: #C8102E;
+}
+
+circle.marker.home.GSW {
+    fill: #FFFFFF;
+    stroke: #FDB927;
+}
+text.jersey.home.GSW {
+    fill: #006BB6;
+}
+circle.marker.visitor.GSW {
+    fill: #006BB6;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.GSW {
+    fill: #FDB927;
+}
+
+circle.marker.home.HOU {
+    fill: #FFFFFF;
+    stroke: #CE1141;
+}
+text.jersey.home.HOU {
+    fill: #CE1141;
+}
+circle.marker.visitor.HOU {
+    fill: #CE1141;
+    stroke: #C4CED4;
+}
+text.jersey.visitor.HOU {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.IND {
+    fill: #FFFFFF;
+    stroke: #FDBB30;
+}
+text.jersey.home.IND {
+    fill: #002D62;
+}
+circle.marker.visitor.IND {
+    fill: #002D62;
+    stroke: #FDBB30;
+}
+text.jersey.visitor.IND {
+    fill: #FDBB30;
+}
+
+circle.marker.home.LAC {
+    fill: #FFFFFF;
+    stroke: #1D428A;
+}
+text.jersey.home.LAC {
+    fill: #C8102E;
+}
+circle.marker.visitor.LAC {
+    fill: #1D428A;
+    stroke: #C8102E;
+}
+text.jersey.visitor.LAC {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.LAL {
+    fill: #FFFFFF;
+    stroke: #FDB927;
+}
+text.jersey.home.LAL {
+    fill: #552583;
+}
+circle.marker.visitor.LAL {
+    fill: #FDB927;
+    stroke: #552583;
+}
+text.jersey.visitor.LAL {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.MEM {
+    fill: #FFFFFF;
+    stroke: #5D76A9;
+}
+text.jersey.home.MEM {
+    fill: #12173F;
+}
+circle.marker.visitor.MEM {
+    fill: #12173F;
+    stroke: #5D76A9;
+}
+text.jersey.visitor.MEM {
+    fill: #5D76A9;
+}
+
+circle.marker.home.MIA {
+    fill: #FFFFFF;
+    stroke: #98002E;
+}
+text.jersey.home.MIA {
+    fill: #98002E;
+}
+circle.marker.visitor.MIA {
+    fill: #000000;
+    stroke: #98002E;
+}
+text.jersey.visitor.MIA {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.MIL {
+    fill: #FFFFFF;
+    stroke: #00471B;
+}
+text.jersey.home.MIL {
+    fill: #00471B;
+}
+circle.marker.visitor.MIL {
+    fill: #00471B;
+    stroke: #EEE1C6;
+}
+text.jersey.visitor.MIL {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.MIN {
+    fill: #FFFFFF;
+    stroke: #0C2340;
+}
+text.jersey.home.MIN {
+    fill: #236192;
+}
+circle.marker.visitor.MIN {
+    fill: #0C2340;
+    stroke: #236192;
+}
+text.jersey.visitor.MIN {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.NOP {
+    fill: #FFFFFF;
+    stroke: #85714D;
+}
+text.jersey.home.NOP {
+    fill: #0C2340;
+}
+circle.marker.visitor.NOP {
+    fill: #0C2340;
+    stroke: #85714D;
+}
+text.jersey.visitor.NOP {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.NYK {
+    fill: #FFFFFF;
+    stroke: #006BB6;
+}
+text.jersey.home.NYK {
+    fill: #F58426;
+}
+circle.marker.visitor.NYK {
+    fill: #006BB6;
+    stroke: #BEC0C2;
+}
+text.jersey.visitor.NYK {
+    fill: #F58426;
+}
+
+circle.marker.home.OKC {
+    fill: #FFFFFF;
+    stroke: #EF3B24;
+}
+text.jersey.home.OKC {
+    fill: #007AC1;
+}
+circle.marker.visitor.OKC {
+    fill: #007AC1;
+    stroke: #EF3B24;
+}
+text.jersey.visitor.OKC {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.ORL {
+    fill: #FFFFFF;
+    stroke: #000000;
+}
+text.jersey.home.ORL {
+    fill: #0077C0;
+}
+circle.marker.visitor.ORL {
+    fill: #0077C0;
+    stroke: #000000;
+}
+text.jersey.visitor.ORL {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.PHI {
+    fill: #FFFFFF;
+    stroke: #ED174C;
+}
+text.jersey.home.PHI {
+    fill: #006BB6;
+}
+circle.marker.visitor.PHI {
+    fill: #006BB6;
+    stroke: #ED174C;
+}
+text.jersey.visitor.PHI {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.PHX {
+    fill: #FFFFFF;
+    stroke: #E56020;
+}
+text.jersey.home.PHX {
+    fill: #1D1160;
+}
+circle.marker.visitor.PHX {
+    fill: #1D1160;
+    stroke: #BEC0C2;
+}
+text.jersey.visitor.PHX {
+    fill: #E56020;
+}
+
+circle.marker.home.POR {
+    fill: #FFFFFF;
+    stroke: #E03A3E;
+}
+text.jersey.home.POR {
+    fill: #000000;
+}
+circle.marker.visitor.POR {
+    fill: #000000;
+    stroke: #E03A3E;
+}
+text.jersey.visitor.POR {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.SAC {
+    fill: #FFFFFF;
+    stroke: #63727A;
+}
+text.jersey.home.SAC {
+    fill: #5A2D81;
+}
+circle.marker.visitor.SAC {
+    fill: #5A2D81;
+    stroke: #63727A;
+}
+text.jersey.visitor.SAC {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.SAS {
+    fill: #FFFFFF;
+    stroke: #C4CED4;
+}
+text.jersey.home.SAS {
+    fill: #000000;
+}
+circle.marker.visitor.SAS {
+    fill: #000000;
+    stroke: #C4CED4;
+}
+text.jersey.visitor.SAS {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.TOR {
+    fill: #FFFFFF;
+    stroke: #CE1141;
+}
+text.jersey.home.TOR {
+    fill: #000000;
+}
+circle.marker.visitor.TOR {
+    fill: #CE1141;
+    stroke: #000000;
+}
+text.jersey.visitor.TOR {
+    fill: #FFFFFF;
+}
+
+circle.marker.home.UTA {
+    fill: #FFFFFF;
+    stroke: #002B5C;
+}
+text.jersey.home.UTA {
+    fill: #00471B;
+}
+circle.marker.visitor.UTA {
+    fill: #002B5C;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.UTA {
+    fill: #F9A01B;
+}
+
+circle.marker.home.WAS {
+    fill: #FFFFFF;
+    stroke: #002B5C;
+}
+text.jersey.WAS.home {
+    fill: #E31837;
+}
+circle.marker.visitor.WAS {
+    fill: #E31837;
+    stroke: #FFFFFF;
+}
+text.jersey.visitor.WAS {
+    fill: #002B5C;
+}
+
+text.jersey {
+    font-family: "PT Sans", sans-serif;
+    font-weight: bold;
+    letter-spacing: -1px;
+}

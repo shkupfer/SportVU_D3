@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NBA Coach's Court</title>
+
+    {% load static %}
+
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+</head>
+<body>
+<div id="header">
+    <div id="header_text">
+        NBA Coach's Court
+    </div>
+    <div id="nba_logo">
+        <a href="https://nba.com/"><img src="{% static 'img/nba-logo.png' %}" id="logo_img"/></a>
+    </div>
+</div>
+<div id="below_header">
+</br>
+<form method="post" id="eventSelector" event-data-url="{% url 'ajax_load_events' %}">
+    {% csrf_token %}
+{#    <table>#}
+{#        {{ form.as_table }}#}
+{#    </table>#}
+{#    {{ form }}#}
+    <table id="form_table">
+    {% for field in form %}
+        <tr class="form_table_row">
+            <td class="form_td">{{ field.label }}</td><td class="form_td_field"> {{ field }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+</form>
+
+<br/>
+
+<table>
+    <tr>
+        <td class="d3_divs_td">
+            <div id="court-area"></div>
+        </td>
+        <td id="scoreboard-cell">
+            <div id="scoreboard-area"></div>
+{#            <div id="lineups-area"></div>#}
+        </td>
+    </tr>
+</table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.0.min.js"></script>
+<script src="../js/d3.v5.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+    {#  TODO: Name variables with Javascript conventions  #}
+    {#  TODO: Standardize comments in these kinds of files? Use either Django or JS?  #}
+    $("#id_game, #id_quarter").change(function () {
+        var url = $("#eventSelector").attr("event-data-url");
+        var gameIds = $("#id_game").val();
+        var quarters = $("#id_quarter").val();
+
+        $.ajax({
+            url: url,
+            data: {
+                'games': gameIds,
+                'quarters': quarters
+            },
+            success: function (data) {
+                $("#id_event").html(data);
+            }
+        })
+    });
+
+    var data_url_mask = "{% url 'play_anim_data' -1 %}";
+    var anim_started = false;
+
+    $("#id_event").change(function() {
+        var data_url = data_url_mask.replace('-1', $(this).val());
+        console.log(data_url);
+        if (anim_started) {
+            interval.stop();
+            var markers = group.selectAll("circle");
+            markers.remove();
+            var jerseys = group.selectAll("text");
+            jerseys.remove();
+            {#var lineup_markers = group.selectAll("text");#}
+            {#lineup_markers.remove();#}
+            {#var lineup_jerseys = group.selectAll("text");#}
+            {#lineup_jerseys.remove();#}
+        } else {
+            anim_started = true;
+        }
+        start_animation(data_url);
+    });
+
+    var court_width = 94,
+        court_height = 50,
+        court_margins = {left: 10, right: 10, top: 10, bottom: 10},
+        width = court_width + court_margins.left + court_margins.right,
+        height = court_height + court_margins.top + court_margins.bottom,
+        scale_factor = 10;
+
+    var time_step = .04 * 1000;
+
+    var interval;
+    var markers;
+    var jerseys;
+    {#var lineup_markers;#}
+    {#var lineup_jerseys;#}
+    {#var lineup_names;#}
+
+    var group = d3.select("#court-area")
+              .append("svg")
+              .attr("width", scale_factor * width)
+              .attr("height", scale_factor * height)
+              .append("g");
+
+    var x_scale = d3.scaleLinear()
+                    .domain([0, court_width])
+                    .range([0, scale_factor * court_width]);
+
+    var y_scale = d3.scaleLinear()
+                    .domain([0, court_height])
+                    .range([0, scale_factor * court_height]);
+
+    var court = group.append("svg:image")
+                     .attr('x', 0)
+                     .attr('y', 0)
+                     .attr('width', scale_factor * court_width)
+                     .attr('height', scale_factor * court_height)
+                     .attr("xlink:href", "{% static 'img/fullcourt_color.png' %}");
+
+    var scoreboard_group = d3.select("#scoreboard-area")
+                             .append("svg")
+                             .attr("width", 180)
+                             .attr("height", 200);
+
+    var scoreboard_graphic = scoreboard_group.append("rect")
+                                             .attr("x", 0)
+                                             .attr("y", 0)
+                                             .attr("width", 180)
+                                             .attr("height", 200)
+                                             .style("fill", "#005996")
+                                             .attr("stroke-width", 10)
+                                             .attr("stroke", "#000000");
+
+    var gameclock_box = scoreboard_group.append("rect")
+                                        .attr("x", 30)
+                                        .attr("y", 13)
+                                        .attr("width", 120)
+                                        .attr("height", 45);
+
+    var gameclock_text = scoreboard_group.append("text")
+                                         .attr("x", 34)
+                                         .attr("y", 51)
+                                         .attr("class", "scoreboard-text")
+                                         .attr("id", "gameclock-text")
+                                         .text("00:00");
+
+    var shotclock_box = scoreboard_group.append("rect")
+                                        .attr("x", 40)
+                                        .attr("y", 85)
+                                        .attr("width", 45)
+                                        .attr("height", 33);
+
+    var shotclock_text = scoreboard_group.append("text")
+                                         .attr("x", 38)
+                                         .attr("y", 112)
+                                         .attr("class", "scoreboard-text")
+                                         .attr("id", "shotclock-text")
+                                         .text(":00");
+
+    var quarter_box = scoreboard_group.append("rect")
+                                      .attr("x", 119)
+                                      .attr("y", 85)
+                                      .attr("width", 20)
+                                      .attr("height", 33);
+
+    var quarter_text = scoreboard_group.append("text")
+                                       .attr("x", 122)
+                                       .attr("y", 112)
+                                       .attr("class", "scoreboard-text")
+                                       .attr("id", "quarter-text")
+                                       .text("0");
+
+    var homescore_box = scoreboard_group.append("rect")
+                                        .attr("x", 10)
+                                        .attr("y", 142)
+                                        .attr("width", 74)
+                                        .attr("height", 45);
+
+    var homescore_text = scoreboard_group.append("text")
+                                         .attr("x", 13)
+                                         .attr("y", 181)
+                                         .attr("class", "scoreboard-text")
+                                         .attr("id", "homescore-text")
+                                         .text("000");
+
+    var visitorscore_box = scoreboard_group.append("rect")
+                                        .attr("x", 96)
+                                        .attr("y", 142)
+                                        .attr("width", 74)
+                                        .attr("height", 45);
+
+    var visitorscore_text = scoreboard_group.append("text")
+                                         .attr("x", 99)
+                                         .attr("y", 181)
+                                         .attr("class", "scoreboard-text")
+                                         .attr("id", "visitorscore-text")
+                                         .text("000");
+
+    scoreboard_group.append("text")
+                    .attr("x", 23)
+                    .attr("y", 137)
+                    .attr("class", "scoreboard-desc")
+                    .text("HOME");
+
+    scoreboard_group.append("text")
+                    .attr("x", 100)
+                    .attr("y", 137)
+                    .attr("class", "scoreboard-desc")
+                    .text("VISITOR");
+
+    scoreboard_group.append("text")
+                    .attr("x", 23)
+                    .attr("y", 80)
+                    .attr("class", "scoreboard-desc")
+                    .style("font-size", "12px")
+                    .text("SHOT CLOCK");
+
+    scoreboard_group.append("text")
+                    .attr("x", 100)
+                    .attr("y", 80)
+                    .attr("class", "scoreboard-desc")
+                    .style("font-size", "12px")
+                    .text("QUARTER");
+
+    function start_animation(data_url) {
+        d3.json(data_url).then( function(data) {
+            {# A list of objects, each having: id, x (a list of 11 floats), y (list of floats), z (list of floats), radius (list of ints), jersey (list of strings), team_abbrev (list of strings), h_or_v (list of strings) #}
+
+            var moments_data = data.moments_data;
+            var quarter = data.quarter;
+            var home_score = data.home_score;
+            var visitor_score = data.visitor_score;
+
+            quarter_text.text(quarter);
+            homescore_text.text(home_score);
+            visitorscore_text.text(visitor_score);
+
+            var moment_ind = 0;
+            interval = d3.interval(function(elapsed) {
+                if (elapsed > time_step * moments_data.length) {
+                    interval.stop();
+                    return;
+                }
+                moment_ind ++;
+                update(moments_data[moment_ind])
+            }, time_step);
+
+        });
+    }
+
+    function update(data) {
+        var t = d3.transition().duration(time_step);
+
+        var marker_data = data.marker_data;
+        var game_clock_time = data.game_clock;
+        var shot_clock_time = data.shot_clock;
+
+        {# TODO: Not sure if using interval and all this is the best way to do it #}
+        {# TODO: If it is, I still think there's a lot of reduncancy in here. Some stuff could be done only once, at the beginning #}
+
+        // Join new data with old elements
+        markers = group.selectAll("circle")
+                           .data(marker_data);
+
+        jerseys = group.selectAll("text")
+                           .data(marker_data);
+
+        // Exit old elements not present in new data
+        markers.exit()
+               .remove();
+
+        jerseys.exit()
+               .remove();
+
+
+        // Enter new elements present in our data
+        markers.enter()
+               .append("circle")
+               .attr("r", function (d) { return d.radius })
+               .attr('class', function(d) { return 'marker ' + d.team_abbrev + ' ' + d.h_or_v })
+               .merge(markers)
+               .transition(t)
+               .attr("cx", function (d) { return x_scale(d.x) })
+               .attr("cy", function (d) { return y_scale(d.y) });
+
+        jerseys.enter()
+               .append("text")
+               .attr("text-anchor", "middle")
+               .text(function (d) { return d.jersey })
+               .attr('class', function(d) { return 'jersey ' + d.team_abbrev + ' ' + d.h_or_v })
+               .merge(jerseys)
+               .transition(t)
+               .attr("x", function (d) { return x_scale(d.x) })
+               .attr("y", function (d) { return y_scale(d.y) + 5 });
+
+        gameclock_text.text(game_clock_time);
+        shotclock_text.text(shot_clock_time);
+
+
+    }
+</script>
+
+
+</body>
+</html>
