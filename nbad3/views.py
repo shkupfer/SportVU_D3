@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.db.models import Case, When, Value, IntegerField, Q
 from django.contrib.postgres.aggregates import ArrayAgg
 from .models import Moment, Event
-from .forms import EventSelector
+
 
 ball_radius = 7
 player_radius = 12
@@ -67,8 +67,8 @@ def play_anim_data(request, event_id):
 
     return resp
 
-
 def coach(request):
+    from .forms import EventSelector
     if request.method == 'POST':
         form = EventSelector()
     else:

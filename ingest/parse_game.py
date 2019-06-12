@@ -98,7 +98,9 @@ def parse_json(input_json):
         for mom_ind, moment in enumerate(event['moments']):
             logger.debug("Moment %s" % mom_ind)
             # TODO: I think I'm cutting off the milliseconds here. Fix that
-            real_timestamp = datetime.datetime.fromtimestamp(int(str(moment[1])[:-3]), tz=timezone('UTC'))
+            real_timestamp_seconds = datetime.datetime.fromtimestamp(int(str(moment[1])[:-3]), tz=timezone('UTC'))
+            real_timestamp_milliseconds = datetime.timedelta(milliseconds=int(str(moment[1])[-3:]))
+            real_timestamp = real_timestamp_seconds + real_timestamp_milliseconds
             game_clock = datetime.timedelta(seconds=moment[2])
             if moment[3] is not None:
                 shot_clock = datetime.timedelta(seconds=moment[3])
