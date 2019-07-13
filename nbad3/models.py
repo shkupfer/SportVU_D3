@@ -1,5 +1,5 @@
 from django.db.models import Model, ForeignKey, ManyToManyField, CASCADE
-from django.db.models import IntegerField, CharField, DateField, DateTimeField, DurationField, FloatField, BooleanField
+from django.db.models import IntegerField, CharField, DateField, DateTimeField, DurationField, FloatField, TimeField
 
 
 class Team(Model):
@@ -57,14 +57,13 @@ class PlayerStatus(Model):
 
 class Event(Model):
     game = ForeignKey(Game, on_delete=CASCADE)
-    event_index = IntegerField()
-    quarter = IntegerField()
-    has_pbp = BooleanField(default=False)
-    msg_type = IntegerField(null=True)
-    msg_action_type = IntegerField(null=True)
-    period_from_pbp = IntegerField(null=True)
-    wc_timestring = CharField(max_length=32, null=True)
-    pc_timestring = CharField(max_length=32, null=True)
+    eventnum = IntegerField()
+    period = IntegerField()
+    msg_type = IntegerField()
+    msg_action_type = IntegerField()
+    # TODO: Parse these two and use DurationFields
+    ev_real_time = TimeField()
+    ev_game_clock = DurationField()
     home_desc = CharField(max_length=256, null=True)
     neutral_desc = CharField(max_length=256, null=True)
     visitor_desc = CharField(max_length=256, null=True)
@@ -81,8 +80,7 @@ class Event(Model):
     player3_team = ForeignKey(Team, null=True, related_name='p3_team', on_delete=CASCADE)
 
     def __str__(self):
-        return ', '.join([desc for desc in [self.home_desc, self.neutral_desc, self.visitor_desc] if desc is not None]) + ' (#%s)' % self.event_index
-        # return "Event %s in quarter %s of game %s (%s)" % (self.event_index, self.quarter, self.game.id, self.id)
+        return ', '.join([desc for desc in [self.home_desc, self.neutral_desc, self.visitor_desc] if desc is not None]) + ' with %s left in period %s (#%s)' % (self.pc_timestring, self.period, self.eventnum)
 
     class Meta:
         db_table = 'event'
@@ -99,11 +97,30 @@ class Coords(Model):
 
 
 class Moment(Model):
-    event = ForeignKey(Event, on_delete=CASCADE)
     real_timestamp = DateTimeField()
+    quarter = IntegerField()
     game_clock = DurationField()
     shot_clock = DurationField(null=True)
     coords = ManyToManyField(Coords)
 
     class Meta:
         db_table = 'moment'
+
+
+class Possession(Model):
+    game = ForeignKey(Game, on_delete=CASCADE)
+    team = ForeignKey(Team, on_delete=CASCADE)
+    home_team_fouls_before = IntegerField()
+    visitor_team_fouls_before = IntegerField()
+    start_event = ForeignKey(Event, related_name='start', on_delete=CASCADE)
+    end_event = ForeignKey(Event, related_name='end', on_delete=CASCADE)
+    points = IntegerField()
+
+    def __str__(self):
+        return "Possession for team %s from game %s, scored %s points" % (self.team, self.game, self.points)
+
+    def long_desc(self):
+        return "Possession for team %s from game %s, scored %s points; Start event: %s; End event: %s" % (self.team, self.game, self.points, self.start_event, self.end_event)
+
+    class Meta:
+        db_table = 'possession'

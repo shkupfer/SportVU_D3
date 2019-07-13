@@ -74,11 +74,10 @@ def get_pbp_resultset(game_id_int):
     return df
 
 
-pbp_keys_translate = {'msg_type': 'EVENTMSGTYPE',
+pbp_keys_translate = {'eventnum': 'EVENTNUM',
+                      'msg_type': 'EVENTMSGTYPE',
                       'msg_action_type': 'EVENTMSGACTIONTYPE',
-                      'period_from_pbp': 'PERIOD',
-                      'wc_timestring': 'WCTIMESTRING',
-                      'pc_timestring': 'PCTIMESTRING',
+                      'period': 'PERIOD',
                       'home_desc': 'HOMEDESCRIPTION',
                       'neutral_desc': 'NEUTRALDESCRIPTION',
                       'visitor_desc': 'VISITORDESCRIPTION',

@@ -5,16 +5,16 @@ from pytz import timezone
 import logging
 import sys
 
-import numpy as np
-import pandas as pd
-
 import django
 from django.db import transaction
 
 django.setup()
 
+import numpy as np
+
 from nbad3.models import Team, Game, Player, PlayerStatus, Event, Moment, Coords
-from ingest.utils import insert_ball_objs, team_colors, get_pbp_resultset, pbp_keys_translate
+from ingest.utils import insert_ball_objs, team_colors, pbp_keys_translate
+from nba_api.stats.endpoints import playbyplayv2
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(message)s")
 logger = logging.getLogger()
@@ -28,7 +28,7 @@ def parse_json(input_json):
 
     _, _, ball_player_status = insert_ball_objs()
 
-    game_id = int(game['gameid'])
+    game_id_int = int(game['gameid'])
     game_date = datetime.datetime.strptime(game['gamedate'], '%Y-%m-%d').date()
 
     first_event = game['events'][0]
@@ -42,10 +42,8 @@ def parse_json(input_json):
     home_team_obj, visitor_team_obj = Team.objects.bulk_create([home_team_obj, visitor_team_obj], ignore_conflicts=True)
     logger.debug("Teams: %s" % [home_team_obj, visitor_team_obj])
 
-    game_obj, _created = Game.objects.get_or_create(id=game_id, game_date=game_date, home=home_team_obj, visitor=visitor_team_obj)
+    game_obj, _created = Game.objects.get_or_create(id=game_id_int, game_date=game_date, home=home_team_obj, visitor=visitor_team_obj)
     logger.info("Game: %s" % game_obj)
-
-    pbp_df = get_pbp_resultset(game_id)
 
     current_quarter = 1
 
@@ -53,6 +51,7 @@ def parse_json(input_json):
         # if len(event['moments']) == 0:
         #     logger.info("No moments in event #%s! Skipping" % ind)
         #     continue
+        logger.info("Loading SportVU data for event #%s..." % (ind + 1))
 
         home, visitor = event['home'], event['visitor']
         player_dicts = [{'id': player['playerid'], 'first_name': player['firstname'], 'last_name': player['lastname']} for player in home['players'] + visitor['players']]
@@ -64,40 +63,11 @@ def parse_json(input_json):
         visitor_goc_res = [PlayerStatus.objects.get_or_create(player_id=player['playerid'], team_id=visitor['teamid'], jersey=player['jersey'], position=player['position']) for player in visitor['players']]
         visitor_player_statuses, _ = zip(*visitor_goc_res)
 
-        event_index = int(event['eventId'])
-        event_pbp = pbp_df[pbp_df['EVENTNUM'] == event_index]
-        if len(event_pbp) == 1:
-            event_pbp_dict = event_pbp.to_dict(orient='records')[0]
-            event_obj_args = {key: event_pbp_dict[pbp_keys_translate[key]] for key in pbp_keys_translate}
-            for field in ('person1_type', 'person2_type', 'person3_type', 'player1_id', 'player2_id', 'player3_id', 'player1_team_id', 'player2_team_id', 'player3_team_id'):
-                if np.isnan(event_obj_args[field]) or int(event_obj_args[field]) == 0:
-                    event_obj_args[field] = None
-                else:
-                    event_obj_args[field] = int(event_obj_args[field])
-            if event_pbp_dict.get('SCORE'):
-                visitor_score, home_score = event_pbp_dict['SCORE'].split(' - ')
-                event_obj_args['visitor_score'], event_obj_args['home_score'] = int(visitor_score), int(home_score)
-
-            Player.objects.bulk_create([Player(id=event_obj_args['player%s_id' % pn]) for pn in range(1, 4) if event_obj_args['player%s_id' % pn] is not None], ignore_conflicts=True)
-
-            event_obj_args['has_pbp'] = True
-        else:
-            event_obj_args = {'has_pbp': False}
-            logger.warning("%s events with this event_index: %s" % (len(event_pbp), event_index))
-
         if event['moments']:
             current_quarter = event['moments'][0][0]
 
-        event_obj_args.update({'game': game_obj,
-                               'event_index': event_index,
-                               'quarter': current_quarter})
-
-        event_obj = Event.objects.create(**event_obj_args)
-        logger.info(event_obj)
-
         for mom_ind, moment in enumerate(event['moments']):
             logger.debug("Moment %s" % mom_ind)
-            # TODO: I think I'm cutting off the milliseconds here. Fix that
             real_timestamp_seconds = datetime.datetime.fromtimestamp(int(str(moment[1])[:-3]), tz=timezone('UTC'))
             real_timestamp_milliseconds = datetime.timedelta(milliseconds=int(str(moment[1])[-3:]))
             real_timestamp = real_timestamp_seconds + real_timestamp_milliseconds
@@ -106,7 +76,7 @@ def parse_json(input_json):
                 shot_clock = datetime.timedelta(seconds=moment[3])
             else:
                 shot_clock = None
-            moment_obj = Moment.objects.create(event=event_obj, real_timestamp=real_timestamp, game_clock=game_clock, shot_clock=shot_clock)
+            moment_obj = Moment.objects.create(quarter=current_quarter, real_timestamp=real_timestamp, game_clock=game_clock, shot_clock=shot_clock)
 
             coordsets = moment[5]
 
@@ -123,10 +93,48 @@ def parse_json(input_json):
             moment_obj.coords.set(coords_to_insert)
             moment_obj.save()
 
+    return game_obj
+
+
+@transaction.atomic
+def load_pbp(game_obj):
+    game_id_int = game_obj.id
+    game_id_str = "00" + str(game_id_int)
+
+    pbp_df = playbyplayv2.PlayByPlayV2(game_id_str).play_by_play.get_data_frame()
+
+    for event_pbp_dict in pbp_df.to_dict(orient='records'):
+        event_obj_args = {key: event_pbp_dict[pbp_keys_translate[key]] for key in pbp_keys_translate}
+        for field in ('person1_type', 'person2_type', 'person3_type', 'player1_id', 'player2_id', 'player3_id',
+                      'player1_team_id', 'player2_team_id', 'player3_team_id'):
+            if np.isnan(event_obj_args[field]) or int(event_obj_args[field]) == 0:
+                event_obj_args[field] = None
+            else:
+                event_obj_args[field] = int(event_obj_args[field])
+        if event_pbp_dict.get('SCORE'):
+            visitor_score, home_score = event_pbp_dict['SCORE'].split(' - ')
+            event_obj_args['visitor_score'], event_obj_args['home_score'] = int(visitor_score), int(home_score)
+
+        event_obj_args['ev_real_time'] = datetime.datetime.strptime(event_pbp_dict['wc_timestring'], "%H:%M %p").time()
+        ev_gc_mins, ev_gc_secs = event_pbp_dict['pc_timestring'].split(':')
+        event_obj_args['ev_game_clock'] = datetime.timedelta(minutes=ev_gc_mins, seconds=ev_gc_secs)
+
+        Player.objects.bulk_create([Player(id=event_obj_args['player%s_id' % pn]) for pn in range(1, 4) if
+                                    event_obj_args['player%s_id' % pn] is not None], ignore_conflicts=True)
+
+        event_obj_args['game'] = game_obj
+
+        event_obj = Event.objects.create(**event_obj_args)
+        logger.info(event_obj)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('input_json')
     args = parser.parse_args()
 
-    parse_json(args.input_json)
+    game_obj = parse_json(args.input_json)
+
+    logger.info("Done parsing SportVU .json, now loading play-by-play data")
+
+    load_pbp(game_obj)
