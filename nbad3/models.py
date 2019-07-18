@@ -61,14 +61,15 @@ class Event(Model):
     period = IntegerField()
     msg_type = IntegerField()
     msg_action_type = IntegerField()
-    # TODO: Parse these two and use DurationFields
     ev_real_time = TimeField()
     ev_game_clock = DurationField()
     home_desc = CharField(max_length=256, null=True)
     neutral_desc = CharField(max_length=256, null=True)
     visitor_desc = CharField(max_length=256, null=True)
-    home_score = IntegerField(null=True)
-    visitor_score = IntegerField(null=True)
+    home_score_after = IntegerField(default=0)
+    visitor_score_after = IntegerField(default=0)
+    home_team_fouls_after = IntegerField(default=0)
+    visitor_team_fouls_after = IntegerField(default=0)
     person1_type = IntegerField(null=True)
     player1 = ForeignKey(Player, null=True, related_name='p1', on_delete=CASCADE)
     player1_team = ForeignKey(Team, null=True, related_name='p1_team', on_delete=CASCADE)
@@ -80,7 +81,7 @@ class Event(Model):
     player3_team = ForeignKey(Team, null=True, related_name='p3_team', on_delete=CASCADE)
 
     def __str__(self):
-        return ', '.join([desc for desc in [self.home_desc, self.neutral_desc, self.visitor_desc] if desc is not None]) + ' with %s left in period %s (#%s)' % (self.pc_timestring, self.period, self.eventnum)
+        return ', '.join([desc for desc in [self.home_desc, self.neutral_desc, self.visitor_desc] if desc is not None]) + ' with %s left in period %s (#%s)' % (self.ev_game_clock, self.period, self.eventnum)
 
     class Meta:
         db_table = 'event'
@@ -97,6 +98,7 @@ class Coords(Model):
 
 
 class Moment(Model):
+    game = ForeignKey(Game, on_delete=CASCADE)
     real_timestamp = DateTimeField()
     quarter = IntegerField()
     game_clock = DurationField()
@@ -110,8 +112,6 @@ class Moment(Model):
 class Possession(Model):
     game = ForeignKey(Game, on_delete=CASCADE)
     team = ForeignKey(Team, on_delete=CASCADE)
-    home_team_fouls_before = IntegerField()
-    visitor_team_fouls_before = IntegerField()
     start_event = ForeignKey(Event, related_name='start', on_delete=CASCADE)
     end_event = ForeignKey(Event, related_name='end', on_delete=CASCADE)
     points = IntegerField()

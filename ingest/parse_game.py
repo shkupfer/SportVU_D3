@@ -4,6 +4,7 @@ import datetime
 from pytz import timezone
 import logging
 import sys
+import re
 
 import django
 from django.db import transaction
@@ -76,7 +77,7 @@ def parse_json(input_json):
                 shot_clock = datetime.timedelta(seconds=moment[3])
             else:
                 shot_clock = None
-            moment_obj = Moment.objects.create(quarter=current_quarter, real_timestamp=real_timestamp, game_clock=game_clock, shot_clock=shot_clock)
+            moment_obj = Moment.objects.create(game=game_obj, quarter=current_quarter, real_timestamp=real_timestamp, game_clock=game_clock, shot_clock=shot_clock)
 
             coordsets = moment[5]
 
@@ -103,6 +104,12 @@ def load_pbp(game_obj):
 
     pbp_df = playbyplayv2.PlayByPlayV2(game_id_str).play_by_play.get_data_frame()
 
+    home_score_after = visitor_score_after = 0
+    home_team_fouls_after = visitor_team_fouls_after = 0
+
+    penalty_re_exp = "^.*\(P[0-9]\.T*([0-9]*|PN)\)"
+    penalty_re = re.compile(penalty_re_exp)
+
     for event_pbp_dict in pbp_df.to_dict(orient='records'):
         event_obj_args = {key: event_pbp_dict[pbp_keys_translate[key]] for key in pbp_keys_translate}
         for field in ('person1_type', 'person2_type', 'person3_type', 'player1_id', 'player2_id', 'player3_id',
@@ -111,13 +118,32 @@ def load_pbp(game_obj):
                 event_obj_args[field] = None
             else:
                 event_obj_args[field] = int(event_obj_args[field])
-        if event_pbp_dict.get('SCORE'):
-            visitor_score, home_score = event_pbp_dict['SCORE'].split(' - ')
-            event_obj_args['visitor_score'], event_obj_args['home_score'] = int(visitor_score), int(home_score)
 
-        event_obj_args['ev_real_time'] = datetime.datetime.strptime(event_pbp_dict['wc_timestring'], "%H:%M %p").time()
-        ev_gc_mins, ev_gc_secs = event_pbp_dict['pc_timestring'].split(':')
-        event_obj_args['ev_game_clock'] = datetime.timedelta(minutes=ev_gc_mins, seconds=ev_gc_secs)
+        if event_pbp_dict.get('SCORE'):
+            visitor_score_after, home_score_after = event_pbp_dict['SCORE'].split(' - ')
+        event_obj_args['home_score_after'], event_obj_args['visitor_score_after'] = int(home_score_after), int(visitor_score_after)
+
+        if event_obj_args['home_desc'] is not None:
+            re_res = penalty_re.search(event_obj_args['home_desc'])
+            if re_res:
+                tf_from_pbp = re_res.group(1)
+                if tf_from_pbp == 'PN':
+                    home_team_fouls_after += 1
+                else:
+                    home_team_fouls_after = int(tf_from_pbp)
+        if event_obj_args['visitor_desc'] is not None:
+            re_res = penalty_re.search(event_obj_args['visitor_desc'])
+            if re_res:
+                tf_from_pbp = re_res.group(1)
+                if tf_from_pbp == 'PN':
+                    visitor_team_fouls_after += 1
+                else:
+                    visitor_team_fouls_after = int(tf_from_pbp)
+        event_obj_args['home_team_fouls_after'], event_obj_args['visitor_team_fouls_after'] = int(home_team_fouls_after), int(visitor_team_fouls_after)
+
+        event_obj_args['ev_real_time'] = datetime.datetime.strptime(event_pbp_dict['WCTIMESTRING'], "%H:%M %p").time()
+        ev_gc_mins, ev_gc_secs = event_pbp_dict['PCTIMESTRING'].split(':')
+        event_obj_args['ev_game_clock'] = datetime.timedelta(minutes=int(ev_gc_mins), seconds=int(ev_gc_secs))
 
         Player.objects.bulk_create([Player(id=event_obj_args['player%s_id' % pn]) for pn in range(1, 4) if
                                     event_obj_args['player%s_id' % pn] is not None], ignore_conflicts=True)
