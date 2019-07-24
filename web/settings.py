@@ -78,7 +78,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'nbad3',
-        'USER': 'shkupfer',
+        'USER': 'ubuntu',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
         'PORT': '5432'
