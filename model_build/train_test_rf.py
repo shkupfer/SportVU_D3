@@ -31,8 +31,8 @@ def train_test_rf(infile_name, test_outfile, mdl_outfile):
     logger.info("MSE on test data: %s" % test_mse)
     logger.info("Feature importances:\n%s" % '\n'.join([f_name + ': ' + str(f_imp) for f_name, f_imp in sorted(zip(feature_cols, rf_reg.feature_importances_),
                                                                                                                key=lambda name_imp: name_imp[1], reverse=True)]))
-
-    x_test['pred_' + target_col] = y_test
+    x_test[target_col] = y_test
+    x_test['pred_' + target_col] = y_pred
     x_test.to_csv(test_outfile, index=False, header=True)
 
     with open(mdl_outfile, 'wb') as mdl_out:

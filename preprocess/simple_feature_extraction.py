@@ -12,6 +12,7 @@ django.setup()
 import numpy as np
 
 from nbad3.models import Game, Moment, Possession
+import random
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(message)s")
 logger = logging.getLogger()
@@ -32,7 +33,7 @@ team_quarter_basket = {('home', 1): left_basket_coords, ('home', 2): left_basket
 output_cols = ['quarter', 'def_team_fouls', 'off_live_ball_tov', 'off_def_rebound', 'off_made_shot', 'score_margin',
                'game_clock_ms', 'shot_clock_ms', 'ball_dist', 'ball_angle', 'points']
 
-def write_features(outfile_name):
+def write_features(outfile_name, one_per_poss):
     with open(outfile_name, 'w') as outfile:
         writer = csv.DictWriter(outfile, fieldnames=output_cols)
         writer.writeheader()
@@ -80,6 +81,9 @@ def write_features(outfile_name):
                                             # .order_by('-game_clock')
                                 )
 
+                if one_per_poss and len(ball_xy_data) > 0:
+                    ball_xy_data = [random.choice(ball_xy_data)]
+
                 for ball_dist_angle in ball_xy_data:
                     poss_attrs.update(ball_dist_angle)
                     writer.writerow(poss_attrs)
@@ -88,6 +92,7 @@ def write_features(outfile_name):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('outfile_name')
+    parser.add_argument('--one_per_poss', action='store_true')
     args = parser.parse_args()
 
-    write_features(args.outfile_name)
+    write_features(args.outfile_name, args.one_per_poss)
