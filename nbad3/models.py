@@ -1,5 +1,5 @@
 from django.db.models import Model, ForeignKey, ManyToManyField, CASCADE
-from django.db.models import IntegerField, CharField, DateField, DateTimeField, DurationField, FloatField, TimeField
+from django.db.models import IntegerField, CharField, DateField, DateTimeField, DurationField, FloatField, TimeField, BooleanField
 
 
 class Team(Model):
@@ -83,11 +83,15 @@ class Event(Model):
     def __str__(self):
         return ', '.join([desc for desc in [self.home_desc, self.neutral_desc, self.visitor_desc] if desc is not None]) + ' with %s left in period %s (#%s)' % (self.ev_game_clock, self.period, self.eventnum)
 
+    def desc_for_poss_dropdown(self):
+        return ', '.join([desc for desc in [self.home_desc, self.neutral_desc, self.visitor_desc] if desc is not None]) + ' with %s left in period %s' % (self.ev_game_clock, self.period)
+
     class Meta:
         db_table = 'event'
 
 
 class Coords(Model):
+    moment = ForeignKey('Moment', on_delete=CASCADE, null=True)
     player_status = ForeignKey(PlayerStatus, on_delete=CASCADE)
     x = FloatField()
     y = FloatField()
@@ -103,7 +107,8 @@ class Moment(Model):
     quarter = IntegerField()
     game_clock = DurationField()
     shot_clock = DurationField(null=True)
-    coords = ManyToManyField(Coords)
+    # TODO: I think this should just be a ForeignKey. Really it's more of a one-to-many relationship.
+    # TODO: Might need to modify the SportVU parsing script
 
     class Meta:
         db_table = 'moment'
@@ -115,12 +120,16 @@ class Possession(Model):
     start_event = ForeignKey(Event, related_name='start', on_delete=CASCADE)
     end_event = ForeignKey(Event, related_name='end', on_delete=CASCADE)
     points = IntegerField()
+    valid = BooleanField(null=True)
 
     def __str__(self):
         return "Possession for team %s from game %s, scored %s points" % (self.team, self.game, self.points)
 
     def long_desc(self):
         return "Possession for team %s from game %s, scored %s points; Start event: %s; End event: %s" % (self.team, self.game, self.points, self.start_event, self.end_event)
+
+    def dropdown_desc(self):
+        return "%s score %s points; start: %s; end: %s" % (self.team.name, self.points, self.start_event.desc_for_poss_dropdown(), self.end_event.desc_for_poss_dropdown())
 
     class Meta:
         db_table = 'possession'

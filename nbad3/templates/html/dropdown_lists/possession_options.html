@@ -1,0 +1,4 @@
+<option value="" selected>Select a possession</option>
+{% for possession in possessions %}
+<option value="{{ possession.pk }}">{{ possession.dropdown_desc }}</option>
+{% endfor %}

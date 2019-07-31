@@ -88,70 +88,9 @@ def parse_json(input_json):
                 player_status = [p_st for p_st in home_player_statuses + visitor_player_statuses + (ball_player_status, ) if p_st.player_id == player_id and p_st.team_id == team_id][0]
                 logger.debug(player_status)
 
-                coords_to_insert.append(Coords(player_status=player_status, x=x, y=y, z=z))
+                coords_to_insert.append(Coords(player_status=player_status, x=x, y=y, z=z, moment=moment_obj))
 
-            coords_to_insert = Coords.objects.bulk_create(coords_to_insert)
-            moment_obj.coords.set(coords_to_insert)
-            moment_obj.save()
-
-    return game_obj
-
-
-@transaction.atomic
-def load_pbp(game_obj):
-    game_id_int = game_obj.id
-    game_id_str = "00" + str(game_id_int)
-
-    pbp_df = playbyplayv2.PlayByPlayV2(game_id_str).play_by_play.get_data_frame()
-
-    home_score_after = visitor_score_after = 0
-    home_team_fouls_after = visitor_team_fouls_after = 0
-
-    penalty_re_exp = "^.*\(P[0-9]\.T*([0-9]*|PN)\)"
-    penalty_re = re.compile(penalty_re_exp)
-
-    for event_pbp_dict in pbp_df.to_dict(orient='records'):
-        event_obj_args = {key: event_pbp_dict[pbp_keys_translate[key]] for key in pbp_keys_translate}
-        for field in ('person1_type', 'person2_type', 'person3_type', 'player1_id', 'player2_id', 'player3_id',
-                      'player1_team_id', 'player2_team_id', 'player3_team_id'):
-            if np.isnan(event_obj_args[field]) or int(event_obj_args[field]) == 0:
-                event_obj_args[field] = None
-            else:
-                event_obj_args[field] = int(event_obj_args[field])
-
-        if event_pbp_dict.get('SCORE'):
-            visitor_score_after, home_score_after = event_pbp_dict['SCORE'].split(' - ')
-        event_obj_args['home_score_after'], event_obj_args['visitor_score_after'] = int(home_score_after), int(visitor_score_after)
-
-        if event_obj_args['home_desc'] is not None:
-            re_res = penalty_re.search(event_obj_args['home_desc'])
-            if re_res:
-                tf_from_pbp = re_res.group(1)
-                if tf_from_pbp == 'PN':
-                    home_team_fouls_after += 1
-                else:
-                    home_team_fouls_after = int(tf_from_pbp)
-        if event_obj_args['visitor_desc'] is not None:
-            re_res = penalty_re.search(event_obj_args['visitor_desc'])
-            if re_res:
-                tf_from_pbp = re_res.group(1)
-                if tf_from_pbp == 'PN':
-                    visitor_team_fouls_after += 1
-                else:
-                    visitor_team_fouls_after = int(tf_from_pbp)
-        event_obj_args['home_team_fouls_after'], event_obj_args['visitor_team_fouls_after'] = int(home_team_fouls_after), int(visitor_team_fouls_after)
-
-        event_obj_args['ev_real_time'] = datetime.datetime.strptime(event_pbp_dict['WCTIMESTRING'], "%H:%M %p").time()
-        ev_gc_mins, ev_gc_secs = event_pbp_dict['PCTIMESTRING'].split(':')
-        event_obj_args['ev_game_clock'] = datetime.timedelta(minutes=int(ev_gc_mins), seconds=int(ev_gc_secs))
-
-        Player.objects.bulk_create([Player(id=event_obj_args['player%s_id' % pn]) for pn in range(1, 4) if
-                                    event_obj_args['player%s_id' % pn] is not None], ignore_conflicts=True)
-
-        event_obj_args['game'] = game_obj
-
-        event_obj = Event.objects.create(**event_obj_args)
-        logger.info(event_obj)
+            Coords.objects.bulk_create(coords_to_insert)
 
 
 if __name__ == "__main__":
@@ -159,8 +98,4 @@ if __name__ == "__main__":
     parser.add_argument('input_json')
     args = parser.parse_args()
 
-    game_obj = parse_json(args.input_json)
-
-    logger.info("Done parsing SportVU .json, now loading play-by-play data")
-
-    load_pbp(game_obj)
+    parse_json(args.input_json)

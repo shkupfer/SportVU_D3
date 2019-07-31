@@ -21,7 +21,7 @@ from nbad3 import views
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url('coach/', views.coach, name='coach'),
-    url('ajax/load_events/', views.load_events, name='ajax_load_events'),
-    path('play_anim_data/<str:event_id>', views.play_anim_data, name='play_anim_data'),
+    url('ajax/load_possessions/', views.load_possessions, name='ajax_load_possessions'),
+    path('play_anim_data/<str:possession_id>', views.play_anim_data, name='play_anim_data'),
     # path('play_anim_data/', views.play_anim_data, name='play_anim_data')
 ]

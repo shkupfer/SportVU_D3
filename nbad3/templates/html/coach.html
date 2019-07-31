@@ -20,7 +20,7 @@
 </div>
 <div id="below_header">
 </br>
-<form method="post" id="eventSelector" event-data-url="{% url 'ajax_load_events' %}">
+<form method="post" id="possessionSelector" possession-data-url="{% url 'ajax_load_possessions' %}">
     {% csrf_token %}
 {#    <table>#}
 {#        {{ form.as_table }}#}
@@ -56,19 +56,17 @@
 <script>
     {#  TODO: Name variables with Javascript conventions  #}
     {#  TODO: Standardize comments in these kinds of files? Use either Django or JS?  #}
-    $("#id_game, #id_quarter").change(function () {
-        var url = $("#eventSelector").attr("event-data-url");
+    $("#id_game").change(function () {
+        var url = $("#possessionSelector").attr("possession-data-url");
         var gameIds = $("#id_game").val();
-        var quarters = $("#id_quarter").val();
 
         $.ajax({
             url: url,
             data: {
-                'games': gameIds,
-                'quarters': quarters
+                'games': gameIds
             },
             success: function (data) {
-                $("#id_event").html(data);
+                $("#id_possession").html(data);
             }
         })
     });
@@ -76,7 +74,8 @@
     var data_url_mask = "{% url 'play_anim_data' -1 %}";
     var anim_started = false;
 
-    $("#id_event").change(function() {
+    $("#id_possession").change(function() {
+        console.log("possession dropdown changed");
         var data_url = data_url_mask.replace('-1', $(this).val());
         console.log(data_url);
         if (anim_started) {
