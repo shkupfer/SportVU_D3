@@ -45,7 +45,7 @@ class PlayerStatus(Model):
     player = ForeignKey(Player, on_delete=CASCADE)
     team = ForeignKey(Team, on_delete=CASCADE, null=True)
     # jersey = CharField(max_length=8)
-    jersey = CharField(max_length=8, default='')
+    jersey = CharField(max_length=8, default='', null=True)
     position = CharField(max_length=8)
 
     def __str__(self):
@@ -107,8 +107,6 @@ class Moment(Model):
     quarter = IntegerField()
     game_clock = DurationField()
     shot_clock = DurationField(null=True)
-    # TODO: I think this should just be a ForeignKey. Really it's more of a one-to-many relationship.
-    # TODO: Might need to modify the SportVU parsing script
 
     class Meta:
         db_table = 'moment'
@@ -120,7 +118,10 @@ class Possession(Model):
     start_event = ForeignKey(Event, related_name='start', on_delete=CASCADE)
     end_event = ForeignKey(Event, related_name='end', on_delete=CASCADE)
     points = IntegerField()
+    going_to_right = BooleanField(null=True)
     valid = BooleanField(null=True)
+    half_court = BooleanField(null=True)
+    hc_start = DurationField(null=True)
 
     def __str__(self):
         return "Possession for team %s from game %s, scored %s points" % (self.team, self.game, self.points)

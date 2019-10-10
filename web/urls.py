@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import url
-from django.urls import path
+from django.urls import path, re_path
 from django.contrib import admin
 from nbad3 import views
 
@@ -22,6 +22,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url('coach/', views.coach, name='coach'),
     url('ajax/load_possessions/', views.load_possessions, name='ajax_load_possessions'),
-    path('play_anim_data/<str:possession_id>', views.play_anim_data, name='play_anim_data'),
+    re_path(r'^play_anim_data/(?P<possession_id>[0-9]+)?/(?P<half_court>.*)', views.play_anim_data, name='play_anim_data'),
     # path('play_anim_data/', views.play_anim_data, name='play_anim_data')
 ]

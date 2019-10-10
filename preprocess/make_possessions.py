@@ -24,7 +24,11 @@ def make_possessions():
         jump_balls = this_game_events.filter(msg_type=10)
         opening_tip = jump_balls.filter(ev_game_clock=datetime.timedelta(minutes=12)).order_by('eventnum').last()
         logger.info("Opening tip event: %s" % opening_tip)
-        team_won_tip = team_in_poss = opening_tip.player3_team
+        if opening_tip.person3_type in (2, 4):
+            jumpball_winner = game.home
+        elif opening_tip.person3_type in (3, 5):
+            jumpball_winner = game.visitor
+        team_won_tip = team_in_poss = jumpball_winner
 
         poss_over_flag = True
         made_shot_flag = False
@@ -56,10 +60,18 @@ def make_possessions():
                              'start_event': opening_tip if ind == 0 else poss_obj.end_event}
 
             # Jump balls
-            if event.msg_type == 10 and event.player3_team != team_in_poss:
-                poss_args.update({'end_event': event})
-                poss_over_flag = True
-                team_in_poss = event.player3_team
+            if event.msg_type == 10:
+                if event.person3_type in (2, 4):
+                    jumpball_winner = game.home
+                elif event.person3_type in (3, 5):
+                    jumpball_winner = game.visitor
+                else:
+                    jumpball_winner = team_in_poss
+
+                if jumpball_winner != team_in_poss:
+                    poss_args.update({'end_event': event})
+                    poss_over_flag = True
+                    team_in_poss = jumpball_winner
 
             # Defensive rebounds
             elif event.msg_type == 4 and event.msg_action_type == 0:

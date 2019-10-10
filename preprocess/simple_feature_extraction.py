@@ -12,7 +12,7 @@ django.setup()
 import numpy as np
 
 from nbad3.models import Game, Moment, Possession
-from ingest.utils import  ball_team
+from ingest.utils import ball_team
 
 import random
 from datetime import timedelta
@@ -30,7 +30,7 @@ right_basket_coords = {'x': 89.25, 'y': 25}
 
 scaler = 180 / np.pi
 
-# Find out which basket each team shoots at in OT
+# TODO: find out which basket each team shoots at in OT
 team_quarter_basket = {('home', 1): left_basket_coords, ('home', 2): left_basket_coords,
                        ('home', 3): right_basket_coords, ('home', 4): right_basket_coords,
                        ('visitor', 1): right_basket_coords, ('visitor', 2): right_basket_coords,

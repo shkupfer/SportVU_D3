@@ -6,6 +6,7 @@ from django.db.models.functions import Concat, Cast, ExtractMinute, ExtractSecon
 from django.contrib.postgres.aggregates import ArrayAgg
 from .models import Moment, Event, Possession
 import logging
+from datetime import timedelta
 import sys
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -14,21 +15,29 @@ logger = logging.getLogger()
 
 ball_radius = 7
 player_radius = 12
-
+examine_hc_secs = 6
 
 def speed_from_coords(first_coords, second_coords, elapsed_secs=1. / 25, scale=3600. / 5280):
     distance = np.sqrt((first_coords['x'] - second_coords['x']) ** 2 + (first_coords['y'] - second_coords['y']) ** 2 + (first_coords['z'] - second_coords['z']) ** 2)
     return scale * (distance / elapsed_secs)
 
 
-def play_anim_data(request, possession_id):
+def play_anim_data(request, possession_id, half_court):
     logger.info("At top of play_anim_data. Request: %s" % str(request))
     poss = Possession.objects.get(id=possession_id)
     game = poss.game
+
+    if half_court == 'on':
+        anim_start = poss.hc_start
+        anim_end = poss.hc_start - timedelta(seconds=examine_hc_secs + .04)
+    else:
+        anim_start = poss.start_event.ev_game_clock
+        anim_end = poss.end_event.ev_game_clock
+
     moment_ids = (Moment.objects.filter(Q(game=game)
                                         & Q(quarter=poss.start_event.period)
-                                        & Q(game_clock__lte=poss.start_event.ev_game_clock)
-                                        & Q(game_clock__gte=poss.end_event.ev_game_clock))
+                                        & Q(game_clock__lte=anim_start)
+                                        & Q(game_clock__gte=anim_end))
                   .distinct('real_timestamp', 'quarter', 'game_clock', 'shot_clock').values_list('id', flat=True))
     logger.info("Got moment IDs for this possession")
 
@@ -93,15 +102,23 @@ def coach(request):
     else:
         form = PossessionSelector()
 
+    logger.info("At bottom of coach()")
     return render(request, 'html/coach.html', {'form': form})
 
 
 def load_possessions(request):
+    print(request.GET.dict())
     possessions = Possession.objects
     game_ids = request.GET.getlist('games')
+    half_court = request.GET.get('half_court')
+    print(game_ids)
+    print(half_court)
 
-    if game_ids:
+    if game_ids and game_ids != ['']:
         possessions = possessions.filter(Q(game_id__in=game_ids))
+    if half_court == 'on':
+        possessions = possessions.filter(half_court=True)
+
 
     loaded_possessions = possessions.order_by('start_event__eventnum')
     return render(request, 'html/dropdown_lists/possession_options.html', {'possessions': loaded_possessions})

@@ -1,7 +1,5 @@
 import argparse
-import json
 import datetime
-from pytz import timezone
 import logging
 import sys
 import re
@@ -13,10 +11,8 @@ django.setup()
 
 import numpy as np
 
-from nbad3.models import Team, Game, Player, PlayerStatus, Event, Moment, Coords
-from ingest.utils import insert_ball_objs, team_colors, pbp_keys_translate
-from nba_api.stats.endpoints import playbyplayv2
-import pickle
+from nbad3.models import Game, Player, Event
+from ingest.utils import pbp_keys_translate
 import pandas as pd
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -44,9 +40,13 @@ def load_pbp(game_id_str, csv_filepath):
             else:
                 event_obj_args[field] = int(event_obj_args[field])
 
-        if event_pbp_dict.get('SCORE'):
+        if not pd.isnull(event_pbp_dict.get('SCORE')):
             visitor_score_after, home_score_after = event_pbp_dict['SCORE'].split(' - ')
         event_obj_args['home_score_after'], event_obj_args['visitor_score_after'] = int(home_score_after), int(visitor_score_after)
+
+        for desc_key in ['home_desc', 'visitor_desc', 'neutral_desc']:
+            if event_obj_args[desc_key] is None or pd.isnull(event_obj_args[desc_key]):
+                event_obj_args[desc_key] = None
 
         if event_obj_args['home_desc'] is not None:
             re_res = penalty_re.search(event_obj_args['home_desc'])
